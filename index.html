@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MG WordKart</title>
+    <style>
+        :root{
+            --bg:#0f172a;           /* slate-900 */
+            --panel:#111827;        /* gray-900 */
+            --muted:#94a3b8;        /* slate-400 */
+            --text:#e5e7eb;         /* gray-200 */
+            --accent:#22d3ee;       /* cyan-400 */
+            --accent-2:#6366f1;     /* indigo-500 */
+            --good:#10b981;         /* emerald-500 */
+            --bad:#ef4444;          /* red-500 */
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 70% -10%, #1f2937 0%, var(--bg) 60%);
+            color:var(--text);
+        }
+        .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px}
+        .panel{width:min(960px,100%); background:linear-gradient(180deg, rgba(255,255,255,0.04), transparent 120px), var(--panel); border:1px solid rgba(255,255,255,0.08); box-shadow:0 10px 40px rgba(0,0,0,0.35); border-radius:20px; padding:24px}
+        header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .brand{display:flex; align-items:center; gap:12px}
+        .logo{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); display:grid; place-items:center; font-weight:700; color:#061018}
+        h1{font-size:20px; margin:0}
+        .muted{color:var(--muted)}
+
+        /* VIEWS */
+        .view{display:none}
+        .view.active{display:block}
+
+        /* HOME */
+        .home-grid{display:grid; grid-template-columns: 1.2fr 1fr; gap:24px}
+        @media (max-width: 800px){ .home-grid{grid-template-columns:1fr;}}
+        .card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:20px}
+        .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+        .kpi{font-size:32px; font-weight:700}
+        .range{width:100%}
+        input[type=range]{width:100%}
+        .btn{appearance:none; border:0; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer}
+        .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#061018}
+        .btn.ghost{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.15)}
+        
+        /* Yeni buton stilleri */
+        .btn.gradient-blue{
+            background: linear-gradient(90deg, #6366f1, #22d3ee);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-blue:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.4);
+        }
+        
+        .btn.gradient-cyan{
+            background: linear-gradient(90deg, #22d3ee, #6366f1);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-cyan:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        /* Kaydet butonu için yeni gradyan stili */
+        .btn.gradient-green{
+            background: linear-gradient(90deg, var(--good), var(--accent));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn.gradient-green:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Seviye butonları için yeni stil */
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .level-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .level-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .level-button.active {
+            background: var(--accent-2);
+            color: white;
+            border-color: var(--accent-2);
+        }
+
+
+        /* FLASHCARDS */
+        .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+        .counter{font-variant-numeric: tabular-nums; font-weight:700}
+        .flash-wrap{display:grid; gap:16px; place-items:center}
+        .flip-scene{width:min(560px, 92vw); height:320px; perspective:1200px}
+        .flip-card{position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .5s ease}
+        .flip-card.is-flipped{transform:rotateY(180deg)}
+        .face{
+            position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;
+            border-radius:18px; border:1px solid rgba(255,255,255,0.12);
+            background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+            backface-visibility: hidden;
+        }
+        .face.back{transform:rotateY(180deg)}
+        .word{
+            font-size: clamp(22px, 5vw, 36px);
+            font-weight: 700;
+            line-height:1.2
+        }
+        .speak{
+            display:flex; gap:8px;
+            position:absolute; bottom:10px; right:10px;
+        }
+        .speak button{border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.25); color:var(--text); border-radius:10px; padding:6px 10px; cursor:pointer; opacity:0.8;}
+        .speak button:hover{opacity:1;}
+
+        .controls{display:flex; gap:12px; flex-wrap:wrap; justify-content: center;}
+        .controls .btn{min-width:120px}
+        
+        /* VIEWED CARDS LIST */
+        .word-list{display: grid; gap: 8px;}
+        .word-list-item{
+            display: flex;
+            flex-direction: column; 
+            justify-content: space-between;
+            align-items: flex-start; 
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+        .word-list-item:hover{background: rgba(255, 255, 255, 0.1);}
+        .word-and-level {
+            display: flex;
+            align-items: center;
+        }
+        .word-list-en {
+            font-weight: 600;
+        }
+        .word-list-tr {
+            color: var(--muted);
+        }
+        .word-list-level {
+            margin-left: 12px;
+            font-size: 0.8em;
+            color: var(--accent);
+            background: rgba(34, 211, 238, 0.15);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        
+        /* ADD CARD */
+        .add-card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .add-card-form label {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .add-card-form input, .add-card-form select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 16px;
+        }
+        .add-card-form input:focus, .add-card-form select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .add-card-form .btn {
+            width: 100%;
+        }
+        .message {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .message.show {
+            opacity: 1;
+        }
+        
+        /* ABOUT & CONTACT */
+        .about-content{padding: 16px; line-height: 1.6;}
+        .about-footer{
+            margin-top: 24px;
+            text-align: center;
+            font-size: 2.5em; /* Kocaman font */
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.1); /* Hafif soluk renk */
+        }
+
+        /* QUIZ VIEW */
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .quiz-question {
+            font-size: clamp(20px, 5vw, 32px);
+            font-weight: 700;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.2s, border-color 0.3s;
+        }
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .quiz-option.correct {
+            background: var(--good);
+            border-color: var(--good);
+            color: white;
+        }
+        .quiz-option.incorrect {
+            background: var(--bad);
+            border-color: var(--bad);
+            color: white;
+        }
+        .quiz-score-container {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .quiz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .quiz-end-message {
+            text-align: center;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="panel">
+            <header>
+                <div class="brand">
+                    <div class="logo">MG</div>
+                    <div>
+                        <h1>MG WordKart</h1>
+                        <div class="muted">İngilizce ⇄ Türkçe kartlarla öğren</div>
+                    </div>
+                </div>
+                <button id="backBtn" class="btn ghost" style="display:none">← Ana sayfa</button>
+            </header>
+
+            <!-- HOME VIEW -->
+            <section id="home" class="view active">
+                <div class="home-grid">
+                    <div class="card">
+                        <h2 style="margin-top:0">Hangi seviyeden başlamak istersin?</h2>
+                        <button id="startLearningBtn" class="btn primary" style="width: 100%; margin-top: 20px; padding: 16px; font-size: 16px;">Öğrenmeye Başla</button>
+                        <p class="hint" style="margin-top:12px">İpucu: Space ile çevir, ← / → ile kart değiştir, mobilde sağa/sola kaydır.</p>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-top:0">Nasıl çalışır?</h3>
+                        <ol>
+                            <li>Hangi seviyeden çalışacağını seç.</li>
+                            <li>Kartın üstüne tıklayarak çevir.</li>
+                            <li>Ses ikonuyla telaffuz dinle (EN/TR).</li>
+                        </ol>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <button id="viewedCardsBtn" class="btn gradient-blue">KAYDEDİLEN KARTLAR</button>
+                            <button id="addCardBtn" class="btn gradient-cyan">YENİ KART EKLE</button>
+                            <button id="aboutBtn" class="btn ghost">HAKKINDA</button>
+                            <button id="contactBtn" class="btn ghost">İLETİŞİM</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- START FLASHCARDS & QUIZ VIEW -->
+            <section id="startFlashcards" class="view">
+                <div class="card">
+                    <h2 style="margin-top:0">Bugün kaç kelime çalışacaksın? <span id="selectedLevelText"></span></h2>
+                    <div class="row">
+                        <span class="muted">Toplam kelime</span>
+                        <span id="totalWords">160</span>
+                    </div>
+                    <div class="row" style="margin-top:16px">
+                        <span class="muted">Seçim (min 5, max toplam)</span>
+                    </div>
+                    <div class="row" style="margin-top:4px">
+                        <input type="range" id="wordCountRange" min="5" max="160" value="5">
+                    </div>
+                    <div class="row" style="margin-top:12px">
+                        <span class="muted">Seçilen</span>
+                        <span class="kpi" id="selectedWordCount">5</span>
+                    </div>
+                    <div style="text-align:center; margin-top:24px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">
+                        <button id="startSessionBtn" class="btn primary">Kartlarla Öğren</button>
+                        <button id="startQuizBtn" class="btn gradient-cyan">Sınav Başlat</button>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- FLASHCARDS VIEW -->
+            <section id="flash" class="view">
+                <div class="topbar">
+                    <div class="muted">Çalışma modu</div>
+                    <div class="counter"><span id="idx">1</span>/<span id="len">1</span></div>
+                </div>
+                <div class="flash-wrap">
+                    <div class="flip-scene" id="scene">
+                        <div class="flip-card" id="card">
+                            <div class="face front">
+                                <div class="word" id="frontWord">Hello</div>
+                                <div class="speak">
+                                    <button id="speakEN" title="İngilizce telaffuz">🔊 EN</button>
+                                </div>
+                            </div>
+                            <div class="face back">
+                                <div class="word" id="backWord">Merhaba</div>
+                                <div class="speak">
+                                    <button id="speakTR" title="Türkçe telaffuz">🔊 TR</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn ghost" id="prevBtn">⬅ Önceki</button>
+                        <button class="btn primary" id="flipBtn">↻ Çevir</button>
+                        <button class="btn gradient-green" id="saveBtn">✓ Kaydet</button>
+                        <button class="btn ghost" id="nextBtn">Sonraki ➡</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- QUIZ VIEW -->
+            <section id="quiz" class="view">
+                <div class="quiz-container">
+                    <div class="topbar">
+                        <span class="muted">Sınav Modu</span>
+                        <div class="counter"><span id="quiz-idx">1</span>/<span id="quiz-len">1</span></div>
+                    </div>
+                    <div class="quiz-score-container">
+                        Skor: <span id="quiz-score">0</span>
+                    </div>
+                    <div class="card" style="width:100%; max-width:500px">
+                        <div class="quiz-question" id="quiz-question">Merhaba</div>
+                        <div class="speak">
+                             <button id="speakQuizTR" title="Türkçe telaffuz">🔊 TR</button>
+                        </div>
+                    </div>
+                    <div class="quiz-options" id="quiz-options">
+                        <!-- Options will be populated here -->
+                    </div>
+                    <div class="quiz-controls">
+                        <button class="btn primary" id="quiz-next-btn" style="display:none;">Sonraki</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEWED CARDS VIEW -->
+            <section id="viewedCards" class="view">
+                <h2 style="margin-top: 0;">Kaydedilen Kartlar</h2>
+                <div id="viewedCardsList" class="word-list">
+                    <!-- Cards will be populated here -->
+                </div>
+            </section>
+            
+            <!-- ADD CARD VIEW -->
+            <section id="addCard" class="view">
+                <h2 style="margin-top: 0;">Yeni Kart Ekle</h2>
+                <form id="addCardForm" class="add-card-form">
+                    <div>
+                        <label for="englishWord">İngilizce Kelime:</label>
+                        <input type="text" id="englishWord" name="englishWord" required>
+                    </div>
+                    <div>
+                        <label for="turkishWord">Türkçe Karşılığı:</label>
+                        <input type="text" id="turkishWord" name="turkishWord" required>
+                    </div>
+                    <div>
+                        <label>Seviye:</label>
+                        <div class="level-buttons" id="addCardLevelButtons">
+                            <button type="button" class="level-button active" data-level="A1">A1</button>
+                            <button type="button" class="level-button" data-level="A2">A2</button>
+                            <button type="button" class="level-button" data-level="B1">B1</button>
+                            <button type="button" class="level-button" data-level="B2">B2</button>
+                            <button type="button" class="level-button" data-level="C1">C1</button>
+                            <button type="button" class="level-button" data-level="C2">C2</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn primary">Karta Ekle</button>
+                </form>
+                <div id="addCardMessage" class="message"></div>
+            </section>
+
+            <!-- ABOUT VIEW -->
+            <section id="about" class="view">
+                <div class="about-content">
+                    <h2 style="margin-top: 0;">MG WordKart Hakkında</h2>
+                    <p>Bu uygulama, İngilizce kelime bilginizi flaş kartlar aracılığıyla geliştirmek için tasarlanmıştır. Belirlenen kelime sayısını çalışabilir ve daha önce çalıştığınız kelimeleri tekrar gözden geçirebilirsiniz.</p>
+                    <p>Uygulama, yerleşik bir kelime havuzu kullanır ve tarayıcınızın sesli okuma özelliğini kullanarak kelimelerin telaffuzunu dinlemenize olanak tanır.</p>
+                </div>
+                <div class="about-footer">
+                    MG STUDIOS
+                </div>
+            </section>
+
+            <!-- YENİ İLETİŞİM SAYFASI EKLENDİ -->
+            <section id="contact" class="view">
+                <div class="about-content">
+                    <h2 style="margin-top: 0;">İletişim</h2>
+                    <p>Uygulama ile ilgili görüş, öneri veya geri bildirimleriniz için bize ulaşabilirsiniz.</p>
+                    <p>E-posta: <a href="mailto:info@mgstudios.com" style="color:var(--accent); text-decoration:none;">info@mgstudios.com</a></p>
+                    <p>Uygulamayı tercih ettiğiniz için teşekkür ederiz!</p>
+                </div>
+                <div class="about-footer">
+                    MG STUDIOS
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ———————————— DATA ————————————
+        const ALL_WORDS = [
+            {"en": "age", "tr": "yaş", "level": "A1"},
+            {"en": "attractive", "tr": "çekici, cazibeli", "level": "A1"},
+            {"en": "beard", "tr": "sakal", "level": "A1"},
+            {"en": "beautiful", "tr": "güzel", "level": "A1"},
+            {"en": "blonde hair", "tr": "sarışın", "level": "A1"},
+            {"en": "curly", "tr": "kıvırcık", "level": "A1"},
+            {"en": "cute", "tr": "tatlı", "level": "A1"},
+            {"en": "dark", "tr": "koyu", "level": "A1"},
+            {"en": "eye-glasses", "tr": "gözlüklü", "level": "A1"},
+            {"en": "fair", "tr": "kumral", "level": "A1"},
+            {"en": "fat", "tr": "şişman", "level": "A1"},
+            {"en": "freckle", "tr": "benek, çil", "level": "A1"},
+            {"en": "gray hair", "tr": "beyaz, gri saç", "level": "A1"},
+            {"en": "good looking", "tr": "iyi görünümlü", "level": "A1"},
+            {"en": "handsome", "tr": "yakışıklı", "level": "A1"},
+            {"en": "hazel", "tr": "ela", "level": "A1"},
+            {"en": "headscarf", "tr": "başörtüsü", "level": "A1"},
+            {"en": "long", "tr": "uzun", "level": "A1"},
+            {"en": "middle aged", "tr": "orta yaşlı", "level": "A1"},
+            {"en": "moustache", "tr": "bıyık", "level": "A1"},
+            {"en": "muscle", "tr": "kaslı", "level": "A1"},
+            {"en": "of medium height", "tr": "orta boylu", "level": "A1"},
+            {"en": "of medium weight", "tr": "orta kilolu", "level": "A1"},
+            {"en": "old", "tr": "yaşlı", "level": "A1"},
+            {"en": "overweight", "tr": "aşırı kilolu", "level": "A1"},
+            {"en": "red hair", "tr": "kızıl saç", "level": "A1"},
+            {"en": "short", "tr": "kısa", "level": "A1"},
+            {"en": "plump", "tr": "balık etli, tombul", "level": "A1"},
+            {"en": "slim", "tr": "ince", "level": "A1"},
+            {"en": "small", "tr": "küçük", "level": "A1"},
+            {"en": "straight", "tr": "düz", "level": "A1"},
+            {"en": "strong", "tr": "güçlü", "level": "A1"},
+            {"en": "cheerful", "tr": "neşeli", "level": "A2"},
+            {"en": "clever", "tr": "zeki", "level": "A2"},
+            {"en": "creative", "tr": "yaratıcı", "level": "A2"},
+            {"en": "easygoing", "tr": "uyumlu", "level": "A2"},
+            {"en": "fair", "tr": "adil", "level": "A2"},
+            {"en": "forgetful", "tr": "unutkan", "level": "A2"},
+            {"en": "funny", "tr": "komik", "level": "A2"},
+            {"en": "generous", "tr": "cömert", "level": "A2"},
+            {"en": "hardworking", "tr": "çalışkan", "level": "A2"},
+            {"en": "helpful", "tr": "yardımsever", "level": "A2"},
+            {"en": "honest", "tr": "dürüst", "level": "A2"},
+            {"en": "kind", "tr": "iyi kalpli", "level": "A2"},
+            {"en": "outgoing", "tr": "dışa dönük", "level": "A2"},
+            {"en": "patient", "tr": "sabırlı", "level": "A2"},
+            {"en": "polite", "tr": "kibar, nazik", "level": "A2"},
+            {"en": "popular", "tr": "popüler", "level": "A2"},
+            {"en": "punctual", "tr": "dakik", "level": "A2"},
+            {"en": "selfish", "tr": "bencil", "level": "A2"},
+            {"en": "smart", "tr": "zeki", "level": "A2"},
+            {"en": "stubborn", "tr": "inatçı", "level": "A2"},
+            {"en": "talkative", "tr": "konuşkan", "level": "A2"},
+            {"en": "thoughtful", "tr": "düşünceli", "level": "A2"},
+            {"en": "tolerant", "tr": "hoşgörülü", "level": "A2"},
+            {"en": "stingy", "tr": "cimri", "level": "A2"},
+            {"en": "jumpsuit", "tr": "tulum", "level": "B1"},
+            {"en": "tall", "tr": "uzun", "level": "B1"},
+            {"en": "thin", "tr": "zayıf", "level": "B1"},
+            {"en": "ugly", "tr": "çirkin", "level": "B1"},
+            {"en": "wavy", "tr": "dalgalı", "level": "B1"},
+            {"en": "weak", "tr": "zayıf, güçsüz", "level": "B1"},
+            {"en": "well built", "tr": "yapılı, kaslı", "level": "B1"},
+            {"en": "young", "tr": "genç", "level": "B1"},
+            {"en": "teen", "tr": "genç", "level": "B1"},
+            {"en": "only think himself", "tr": "sadece kendini düşünmek", "level": "B1"},
+            {"en": "never share something", "tr": "asla bir şey paylaşmamak", "level": "B1"},
+            {"en": "feel nervous", "tr": "sinirli hissetmek", "level": "B1"},
+            {"en": "talk in front of people", "tr": "insanların önünde konuşmak", "level": "B1"},
+            {"en": "buy a present", "tr": "hediye almak", "level": "B1"},
+            {"en": "tell funny stories", "tr": "komik hikayeler anlatmak", "level": "B1"},
+            {"en": "surf on the net", "tr": "internette gezinmek", "level": "B1"},
+            {"en": "get on well with each other", "tr": "iyi geçinmek", "level": "B1"},
+            {"en": "have similar interests", "tr": "benzer zevkleri olmak", "level": "B1"},
+            {"en": "have hobbies in common", "tr": "ortak hobileri olmak", "level": "B1"},
+            {"en": "tell lies", "tr": "yalan söylemek", "level": "B1"},
+            {"en": "tell the truth", "tr": "doğruyu söylemek", "level": "B1"}
+        ];
+
+        // ———————————— STATE ————————————
+        let pool = [...ALL_WORDS];
+        let deck = [];
+        let viewedCards = [];
+        let savedCards = []; 
+        let idx = 0;
+        let flipped = false;
+
+        // Quiz State
+        let quizDeck = [];
+        let currentQuizIndex = 0;
+        let score = 0;
+        let totalQuestions = 0;
+        let quizActive = false;
+        let isAnswered = false;
+
+        // ———————————— ELMS ————————————
+        const views = { 
+            home: document.getElementById('home'), 
+            flash: document.getElementById('flash'), 
+            viewedCards: document.getElementById('viewedCards'),
+            addCard: document.getElementById('addCard'),
+            about: document.getElementById('about'),
+            contact: document.getElementById('contact'),
+            startFlashcards: document.getElementById('startFlashcards'),
+            quiz: document.getElementById('quiz')
+        };
+        const backBtn = document.getElementById('backBtn');
+        const startLearningBtn = document.getElementById('startLearningBtn');
+        const viewedCardsBtn = document.getElementById('viewedCardsBtn'); 
+        const addCardBtn = document.getElementById('addCardBtn');
+        const aboutBtn = document.getElementById('aboutBtn');
+        const contactBtn = document.getElementById('contactBtn');
+        const viewedCardsListEl = document.getElementById('viewedCardsList');
+        const addCardForm = document.getElementById('addCardForm');
+        const englishWordInput = document.getElementById('englishWord');
+        const turkishWordInput = document.getElementById('turkishWord');
+        const addCardLevelButtons = document.getElementById('addCardLevelButtons');
+        const addCardMessage = document.getElementById('addCardMessage');
+
+        const selectedLevelTextEl = document.getElementById('selectedLevelText');
+        const totalWordsEl = document.getElementById('totalWords');
+        const wordCountRange = document.getElementById('wordCountRange');
+        const selectedWordCountEl = document.getElementById('selectedWordCount');
+        const startSessionBtn = document.getElementById('startSessionBtn');
+        const startQuizBtn = document.getElementById('startQuizBtn');
+
+        const sceneEl = document.getElementById('scene');
+        const cardEl = document.getElementById('card');
+        const frontWord = document.getElementById('frontWord');
+        const backWord  = document.getElementById('backWord');
+        const idxEl = document.getElementById('idx');
+        const lenEl = document.getElementById('len');
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const saveBtn = document.getElementById('saveBtn'); 
+        const speakENBtn = document.getElementById('speakEN');
+        const speakTRBtn = document.getElementById('speakTR');
+
+        // Quiz elements
+        const quizQuestionEl = document.getElementById('quiz-question');
+        const quizOptionsContainerEl = document.getElementById('quiz-options');
+        const quizScoreEl = document.getElementById('quiz-score');
+        const quizIdxEl = document.getElementById('quiz-idx');
+        const quizLenEl = document.getElementById('quiz-len');
+        const quizNextBtn = document.getElementById('quiz-next-btn');
+        const speakQuizTRBtn = document.getElementById('speakQuizTR');
+        
+        // ———————————— INIT ————————————
+        function initHome(){
+            pool = [...ALL_WORDS];
+            const allLevelButtons = document.querySelectorAll('.level-button');
+            allLevelButtons.forEach(btn => btn.classList.remove('active'));
+            quizActive = false;
+        }
+
+        function show(view){
+            Object.values(views).forEach(v=>v.classList.remove('active'));
+            views[view].classList.add('active');
+            backBtn.style.display = view !== 'home' ? 'inline-flex' : 'none';
+        }
+
+        function shuffle(arr){
+            for(let i=arr.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+            return arr;
+        }
+
+        function showWordCountSelection(){
+            const filteredWords = ALL_WORDS;
+            if (filteredWords.length === 0) {
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: var(--panel);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    z-index: 1000;
+                    text-align: center;
+                `;
+                messageBox.innerHTML = `
+                    <p>Bu seviye için henüz kelime yok.</p>
+                    <button id="closeMessageBox" class="btn primary" style="margin-top: 16px;">Tamam</button>
+                `;
+                document.body.appendChild(messageBox);
+                document.getElementById('closeMessageBox').addEventListener('click', () => {
+                    document.body.removeChild(messageBox);
+                });
+                return;
+            }
+            pool = [...filteredWords];
+            selectedLevelTextEl.textContent = '';
+            const totalCount = pool.length;
+            
+            totalWordsEl.textContent = totalCount;
+            wordCountRange.max = totalCount;
+            const initialValue = Math.min(5, totalCount);
+            wordCountRange.value = initialValue;
+            selectedWordCountEl.textContent = initialValue;
+            
+            show('startFlashcards');
+        }
+
+        function startFlashcardSession(){
+            const wordCount = parseInt(wordCountRange.value, 10);
+            deck = shuffle(pool).slice(0, wordCount);
+            lenEl.textContent = deck.length;
+            idx = 0; flipped = false;
+            viewedCards = [];
+            renderCard();
+            show('flash');
+        }
+
+        function renderCard(){
+            const item = deck[idx];
+            if(!item){
+                frontWord.textContent = 'Bitti!';
+                backWord.textContent = 'Tüm kartları bitirdiniz.';
+                nextBtn.disabled = true;
+                prevBtn.disabled = true;
+                saveBtn.disabled = true;
+                return;
+            }
+            frontWord.textContent = item.en;
+            backWord.textContent = item.tr;
+            idxEl.textContent = String(idx+1);
+            cardEl.classList.remove('is-flipped');
+            flipped = false;
+            nextBtn.disabled = false;
+            prevBtn.disabled = false;
+            saveBtn.disabled = false;
+        }
+        
+        function showViewedCards(){
+            viewedCardsListEl.innerHTML = '';
+            if (savedCards.length === 0) {
+                viewedCardsListEl.innerHTML = '<p class="muted">Henüz hiç kart kaydetmediniz.</p>';
+            } else {
+                savedCards.forEach(card => {
+                    const item = document.createElement('div');
+                    item.className = 'word-list-item';
+                    item.innerHTML = `
+                        <div class="word-and-level">
+                            <span class="word-list-en">${card.en}</span>
+                            <span class="word-list-level">${card.level}</span>
+                        </div>
+                        <span class="word-list-tr">${card.tr}</span>
+                    `;
+                    item.addEventListener('click', () => {
+                        speak(card.en, 'en-US');
+                    });
+                    viewedCardsListEl.appendChild(item);
+                });
+            }
+            show('viewedCards');
+        }
+
+        function showAddCard(){
+            addCardMessage.textContent = '';
+            addCardForm.reset();
+            document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('#addCardLevelButtons .level-button[data-level="A1"]').classList.add('active');
+            show('addCard');
+        }
+
+        function showAbout(){
+            show('about');
+        }
+
+        function showContact(){
+            show('contact');
+        }
+
+        function flip(){ flipped = !flipped; cardEl.classList.toggle('is-flipped'); }
+        function next(){
+            if (deck[idx] && !viewedCards.includes(deck[idx])) {
+                viewedCards.push(deck[idx]);
+            }
+            idx = (idx+1) % deck.length;
+            renderCard();
+        }
+        function prev(){ idx = (idx-1+deck.length) % deck.length; renderCard(); }
+        
+        function saveCard() {
+            const currentCard = deck[idx];
+            const isAlreadySaved = savedCards.some(card => card.en === currentCard.en);
+            if (currentCard && !isAlreadySaved) {
+                savedCards.push(currentCard);
+                const messageBox = document.createElement('div');
+                messageBox.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(--good);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease-in-out;
+                `;
+                messageBox.textContent = `"${currentCard.en}" kaydedildi!`;
+                document.body.appendChild(messageBox);
+                
+                setTimeout(() => {
+                    messageBox.style.opacity = '1';
+                }, 10);
+                setTimeout(() => {
+                    messageBox.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(messageBox), 300);
+                }, 2000);
+            }
+        }
+
+        function addCard(en, tr, level) {
+            ALL_WORDS.push({ en: en, tr: tr, level: level });
+            initHome();
+        }
+
+        function handleAddCardSubmit(e) {
+            e.preventDefault();
+            const enWord = englishWordInput.value.trim();
+            const trWord = turkishWordInput.value.trim();
+            const activeLevelButton = addCardLevelButtons.querySelector('.level-button.active');
+            const level = activeLevelButton ? activeLevelButton.getAttribute('data-level') : 'A1';
+
+            if (enWord && trWord) {
+                addCard(enWord, trWord, level);
+                addCardMessage.textContent = 'Yeni kart başarıyla eklendi!';
+                addCardMessage.classList.add('show');
+                addCardForm.reset();
+                setTimeout(() => {
+                    addCardMessage.classList.remove('show');
+                }, 3000);
+                document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector('#addCardLevelButtons .level-button[data-level="A1"]').classList.add('active');
+            } else {
+                addCardMessage.textContent = 'Lütfen tüm alanları doldurun.';
+                addCardMessage.classList.add('show');
+            }
+        }
+
+        // ———————————— TTS ————————————
+        function speak(text, lang){
+            try{
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = lang; u.rate = 0.95; u.pitch = 1; u.volume = 1;
+                window.speechSynthesis.speak(u);
+            }catch(e){ console.warn('TTS desteklenmiyor', e); }
+        }
+
+        // ———————————— QUIZ LOGIC ————————————
+        function startQuizSession(){
+            const wordCount = parseInt(wordCountRange.value, 10);
+            quizDeck = shuffle(pool).slice(0, wordCount);
+            totalQuestions = quizDeck.length;
+            currentQuizIndex = 0;
+            score = 0;
+            quizActive = true;
+            isAnswered = false;
+            quizLenEl.textContent = totalQuestions;
+            quizScoreEl.textContent = score;
+            show('quiz');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion(){
+            if(currentQuizIndex >= totalQuestions){
+                endQuiz();
+                return;
+            }
+            
+            isAnswered = false;
+            quizNextBtn.style.display = 'none';
+
+            const currentWord = quizDeck[currentQuizIndex];
+            const level = currentWord.level;
+            const correctAnswer = currentWord.en;
+            
+            const distractors = shuffle(ALL_WORDS.filter(w => w.level === level && w.en !== correctAnswer)).slice(0, 3);
+            const options = shuffle([correctAnswer, ...distractors.map(d => d.en)]);
+
+            quizQuestionEl.textContent = currentWord.tr;
+            quizIdxEl.textContent = currentQuizIndex + 1;
+            quizOptionsContainerEl.innerHTML = '';
+            
+            options.forEach(option => {
+                const optionEl = document.createElement('button');
+                optionEl.className = 'quiz-option';
+                optionEl.textContent = option;
+                optionEl.addEventListener('click', () => handleAnswer(optionEl, correctAnswer));
+                quizOptionsContainerEl.appendChild(optionEl);
+            });
+        }
+        
+        function handleAnswer(selectedOptionEl, correctAnswer){
+            if(isAnswered) return;
+
+            isAnswered = true;
+            const isCorrect = selectedOptionEl.textContent === correctAnswer;
+            if(isCorrect){
+                score++;
+                selectedOptionEl.classList.add('correct');
+            } else {
+                selectedOptionEl.classList.add('incorrect');
+                const allOptions = quizOptionsContainerEl.querySelectorAll('.quiz-option');
+                allOptions.forEach(opt => {
+                    if(opt.textContent === correctAnswer){
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            quizScoreEl.textContent = score;
+            
+            quizOptionsContainerEl.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.disabled = true;
+            });
+
+            quizNextBtn.style.display = 'inline-flex';
+        }
+
+        function nextQuizQuestion(){
+            currentQuizIndex++;
+            renderQuizQuestion();
+        }
+
+        function endQuiz(){
+            quizQuestionEl.textContent = 'Sınav Bitti!';
+            quizOptionsContainerEl.innerHTML = `<p class="quiz-end-message">Skorunuz: ${score} / ${totalQuestions}</p>`;
+            quizNextBtn.style.display = 'none';
+        }
+
+        // ———————————— EVENTS ————————————
+        startLearningBtn.addEventListener('click', showWordCountSelection);
+        
+        addCardLevelButtons.addEventListener('click', (e) => {
+            if (e.target.classList.contains('level-button')) {
+                document.querySelectorAll('#addCardLevelButtons .level-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                e.target.classList.add('active');
+            }
+        });
+
+        startSessionBtn.addEventListener('click', startFlashcardSession);
+        startQuizBtn.addEventListener('click', startQuizSession);
+        quizNextBtn.addEventListener('click', nextQuizQuestion);
+
+        wordCountRange.addEventListener('input', (e) => {
+            selectedWordCountEl.textContent = e.target.value;
+        });
+
+        backBtn.addEventListener('click', ()=>{ show('home'); window.speechSynthesis.cancel(); });
+
+        viewedCardsBtn.addEventListener('click', showViewedCards);
+        addCardBtn.addEventListener('click', showAddCard);
+        aboutBtn.addEventListener('click', showAbout);
+        contactBtn.addEventListener('click', showContact);
+
+        flipBtn.addEventListener('click', flip);
+        saveBtn.addEventListener('click', saveCard); 
+        nextBtn.addEventListener('click', next);
+        prevBtn.addEventListener('click', prev);
+
+        addCardForm.addEventListener('submit', handleAddCardSubmit);
+
+        window.addEventListener('keydown', (e)=>{
+            if(views.flash.classList.contains('active')){
+                if(e.code==='Space'){ e.preventDefault(); flip(); }
+                else if(e.key==='ArrowRight'){ next(); }
+                else if(e.key==='ArrowLeft'){ prev(); }
+            }
+        });
+
+        let startX=null;
+        document.getElementById('scene').addEventListener('touchstart', (e)=>{ startX = e.touches[0].clientX; }, {passive:true});
+        document.getElementById('scene').addEventListener('touchend', (e)=>{
+            if(startX===null) return; const dx = e.changedTouches[0].clientX - startX; startX=null;
+            if(Math.abs(dx) < 40) { flip(); return; }
+            if(dx < 0) next(); else prev();
+        });
+
+        cardEl.addEventListener('click', (e)=>{
+            if (e.target.closest('button')) {
+                return;
+            }
+            flip();
+        });
+
+        speakENBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].en, 'en-US'); });
+        speakTRBtn.addEventListener('click', ()=>{ if(deck[idx]) speak(deck[idx].tr, 'tr-TR'); });
+        speakQuizTRBtn.addEventListener('click', () => {
+            if(quizDeck[currentQuizIndex]) speak(quizDeck[currentQuizIndex].tr, 'tr-TR');
+        });
+
+        initHome();
+    </script>
+</body>
+</html>
+
